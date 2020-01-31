@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    .button {
+      height: 50px;
+      width: 100px;
+      border: solid 2px black;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      margin-left: 20px;
+      cursor: pointer;
+      background-color: yellow;
+      color: black;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 15px;
+      box-shadow: 2px 2px 10px black;
+    }
+
+    .button:disabled {
+      background-color: gray;
+    }
+
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="800" height="800" style="border: 1px solid #000;"></canvas>
+  <button id="playAgainBtn" onclick="playAgain()" class="button" disabled>Play Again</button>
+  <script>
+      let canvas, ctx, intervalGame, intervalRandomFood;
+      const speed = 10;
+
+      const playAgainButton = document.getElementById('playAgainBtn');
+
+      window.onload = function() {
+        canvas = document.getElementById("canvas");
+        ctx = canvas.getContext("2d");
+
+        document.addEventListener("keydown", keyDownEvent);
+
+        // render X times per second
+        makeIntervals();
+      };
+
+      // game world
+      const gridSize  = 50; // 16 x 50 = 800
+      const tileSize = 16
+      let nextX = nextY = 0;
+      let score = 0;
+      let previousScore = 0;
+      let stopGame = false;
+
+      // snake
+      let defaultTailSize = 5;
+      let tailSize = defaultTailSize;
+      let snakeTrail = [];
+      let snakeX = (snakeY = 10);
+
+      // apple
+      let appleX = appleY = 0;
+
+      // draw
+      function draw() {
+        // move snake in next pos
+        snakeX += nextX;
+        snakeY += nextY;
+
+        // snake over game world?
+        if (snakeX < 0) {
+          snakeX = gridSize - 1;
+        }
+        if (snakeX > gridSize - 1) {
+          snakeX = 0;
+        }
+
+        if (snakeY < 0) {
+          snakeY = gridSize - 1;
+        }
+        if (snakeY > gridSize - 1) {
+          snakeY = 0;
+        }
+
+        //snake bite apple?
+        foodAteBySnake();
+        
+
+        //paint background
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        renderScore();
+
+        // paint snake
+        renderSnake();
+
+        // paint apple
+        createFood();
+
+        //set snake trail
+        setMovementSnake();
+      }
+
+      // input
+      function keyDownEvent(e) {
+        switch (e.keyCode) {
+          case 37:
+            nextX = -1;
+            nextY = 0;
+            break;
+          case 38:
+            nextX = 0;
+            nextY = -1;
+            break;
+          case 39:
+            nextX = 1;
+            nextY = 0;
+            break;
+          case 40:
+            nextX = 0;
+            nextY = 1;
+            break;
+        }
+      }
+
+      function makeIntervals() {
+        intervalGame = setInterval(draw, 1000 / speed);
+        intervalRandomFood = setInterval(setLocationFood, randomRepaintFood() * 1000);
+      }
+
+      function createFood() {
+        ctx.fillStyle = "blue";
+        ctx.fillRect(appleX * tileSize, appleY * tileSize, tileSize, tileSize);
+      }
+
+      function setLocationFood() {
+        appleX = Math.floor(Math.random() * gridSize);
+        appleY = Math.floor(Math.random() * gridSize);
+      }
+
+      function randomRepaintFood() {
+        const number = Math.floor(Math.random() * 10) + 1;
+
+        if (number < 4) {
+          return 4;
+        }
+
+        return number;
+      }
+
+      function renderSnake() {
+        ctx.strokeStyle = "black";
+        
+
+        for (var i = 0; i < snakeTrail.length; i++) {
+          ctx.fillStyle = "blue";
+          if(i === snakeTrail.length - 1) {
+            ctx.fillStyle = "black";
+          }
+
+          ctx.fillRect(
+            snakeTrail[i].x * tileSize,
+            snakeTrail[i].y * tileSize,
+            tileSize - 2,
+            tileSize - 2
+          );
+          ctx.strokeRect(
+            snakeTrail[i].x * tileSize,
+            snakeTrail[i].y * tileSize,
+            tileSize - 2,
+            tileSize - 2
+          );
+
+          //snake bites it's tail?
+          if (snakeTrail[i].x == snakeX && snakeTrail[i].y == snakeY && tailSize !== defaultTailSize) {
+            tailSize = defaultTailSize;
+            
+            clearInterval(intervalGame);
+            clearInterval(intervalRandomFood);
+            stop = true;
+            renderPlayButton();
+          }
+        }
+      }
+
+      function foodAteBySnake() {
+        if (snakeX == appleX && snakeY == appleY) {
+          tailSize++;
+          score++;
+
+          setLocationFood();
+        }
+      }
+      
+
+      function playAgain() {
+        stopGame = false;
+        previousScore = score;
+        score = 0;
+        makeIntervals();
+        playAgainButton.setAttribute('disabled', 'disabled');
+      }
+
+      function setMovementSnake() {
+        snakeTrail.push({ x: snakeX, y: snakeY });
+        while (snakeTrail.length > tailSize) {
+          snakeTrail.shift();
+          if (stopGame) break;
+        }
+      }
+
+      function renderPlayButton() {
+        playAgainButton.removeAttribute('disabled');
+      }
+
+      function renderScore() {
+        ctx.font = "15px Arial";
+        ctx.fillStyle = "black";
+
+        if (score > previousScore) {
+          ctx.fillStyle = "green";
+        }
+
+        ctx.fillText(`Score: ${score}`, 600, 20);
+      }
+    </script>
+</body>
+</html>

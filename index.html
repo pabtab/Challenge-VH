@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>TodoList</title>
+
+  <script src='https://kit.fontawesome.com/a076d05399.js'></script>
+  <style>
+    body {
+      margin: 0;
+      min-width: 250px;
+    }
+    
+    /* Include the padding and border in an element's total width and height */
+    * {
+      box-sizing: border-box;
+    }
+    
+    /* Remove margins and padding from the list */
+    ul {
+      margin: 0;
+      padding: 0;
+    }
+    
+    ul li {
+      position: relative;
+      padding: 12px 8px 12px 40px;
+      list-style-type: none;
+      background: #eee;
+      font-size: 18px;
+      transition: 0.2s;
+      
+      /* make the list items unselectable */
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    
+    ul li:nth-child(odd) {
+      background: #f9f9f9;
+    }
+    
+    
+    /* When clicked on, add a background color and strike out text */
+    ul li.checked {
+      background: #888;
+      color: #fff;
+      text-decoration: line-through;
+    }
+    
+    /* Add a "checked" mark when clicked on */
+    ul li.checked::before {
+      content: '';
+      position: absolute;
+      border-color: #fff;
+      border-style: solid;
+      border-width: 0 2px 2px 0;
+      top: 10px;
+      left: 16px;
+      transform: rotate(45deg);
+      height: 15px;
+      width: 7px;
+    }
+    
+    .header {
+      background-color: aqua;
+      padding: 30px 40px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 200px;
+    }
+
+    .title {
+      margin:5px;
+    }
+    
+    input {
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+    }
+    
+    .addBtn {
+      padding: 10px;
+      width: 25%;
+      background: #d9d9d9;
+      color: #555;
+      float: left;
+      text-align: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+      border-radius: 0;
+      margin-top: 20px;
+    }
+    
+    .addBtn:hover {
+      background-color: #bbb;
+    }
+
+    .item-button {
+      width: 40%;
+      height:30px;
+      border-radius: 20px;
+      border: 1px solid black;
+      background-color: orange;
+      cursor: pointer;
+    }
+
+    .item-button--delete {
+      background-color: orangered;
+    }
+
+    .buttons-container {
+      display: flex;
+      justify-content: space-around;
+    }
+
+    .fas {
+      font-size: 20px;
+    }
+
+    </style>
+</head>
+<body>
+  <div id="myDIV" class="header">
+    <h2 class="title">Vanhack ToDoList</h2>
+    <input type="text" id="myInput" placeholder="Title...">
+    <select id="priorityDropdown">
+      <option value="low" selected>Low</option>
+      <option value="medium">Medium</option>
+      <option value="high">High</option>
+    </select>
+    <button onclick="handleSubmitButton()" class="addBtn" id="submitButton">Add</button>
+  </div>
+  
+  <ul id="myUL">
+  </ul>
+
+  <script>
+    let items = [];
+    let idSelected, inputValue, prioritySelector;
+    let submitButton = document.getElementById('submitButton');
+    const input = document.getElementById("myInput");
+    const list = document.getElementById("myUL");
+    const priorityDropdown = document.getElementById("priorityDropdown");
+    list.addEventListener("click", itemClicked);
+
+    function handleSubmitButton() {
+      inputValue = input.value;
+      prioritySelector = priorityDropdown.options[priorityDropdown.selectedIndex].value;
+      console.log(submitButton.innerText)
+      if (submitButton.innerText === 'Add') {
+        newTask()
+      } else {
+        edit();
+      }
+    }
+
+    function addNewItem(task) {
+      items.push({
+        text: task,
+        id: items.length + 1
+      })
+    }
+
+    function editTask(id) {
+      submitButton.innerText = 'Edit';
+      idSelected = id;
+      const valueToModify = items.find(item => item.id === id).text;
+      input.value = valueToModify;
+    }
+
+    function edit() {
+      items = items.map(item => {
+        if(item.id === idSelected) {
+          return {
+            text: inputValue,
+            id: idSelected,
+          }
+        }
+
+        return item;
+      })
+
+    }
+
+    function removeTask(id) {
+      items.splice(id - 1, 1);
+      let el = document.getElementById(`li-${id}`);
+      el.remove();
+
+    }
+
+    function newTask() {
+      if (inputValue === '') {
+        alert("Write something!");
+      } else {
+        addNewItem(inputValue);
+        renderItem(items.length, inputValue);
+      }
+      input.value = "";
+
+    }
+
+    function itemClicked(event) {
+      const {tagName, className, id} = event.target;
+      if (tagName === 'BUTTON') {
+        if (className.includes('edit')) {
+          editTask(Number(id));
+        } else if(className.includes('delete')){
+          removeTask(Number(id));
+        }
+      }
+    }
+
+    function renderItemButtons(id) {
+      let buttonsContainer = document.createElement("span");
+      buttonsContainer.className = "buttons-container";
+
+      let iconEditBtn = document.createElement("button");
+      let iconRemoveBtn = document.createElement("button");
+      iconEditBtn.className = "item-button item-button--edit";
+      iconRemoveBtn.className = "item-button item-button--delete";
+      iconEditBtn.id = id;
+      iconRemoveBtn.id = id;
+
+      let editIcon = document.createElement("i");
+      let trashIcon = document.createElement("i");
+
+      editIcon.className = "fas fa-edit";
+      trashIcon.className = "fas fa-trash-alt";
+      iconEditBtn.appendChild(editIcon);
+      iconRemoveBtn.appendChild(trashIcon);
+
+      buttonsContainer.appendChild(iconEditBtn);
+      buttonsContainer.appendChild(iconRemoveBtn);
+
+      return buttonsContainer;
+    }
+
+    function renderItem(id, inputValue) {
+      let li = document.createElement("li");
+      li.id = `li-${id}`;
+      let p = document.createElement("p");
+      let t = document.createTextNode(inputValue);
+      p.appendChild(t);
+      li.appendChild(p);
+
+      const buttons = renderItemButtons(id);
+      li.appendChild(buttons);
+
+      list.appendChild(li);
+    }
+  </script>
+</body>
+</html>
